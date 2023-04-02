@@ -1,22 +1,40 @@
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 
-async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+const BASE_FEE = "250000000000000000" // 0.25 is this the premium in LINK?
+const GAS_PRICE_LINK = 1e9 // link per gas, is this the gas lane? // 0.000000001 LINK per gas
 
-  const lockedAmount = ethers.utils.parseEther("1");
-
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+const networkConfig: Record<number, { vrfCoordinatorV2: string }> = {
+  5: {
+    vrfCoordinatorV2: '0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D'
+  }
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
+async function main() {
+  const networkName = network.name
+
+  let vrfCoordinatorAddress
+  // If we are on a local development network, we need to deploy mocks!
+  if (['localhost', 'hardhat'].includes(networkName)) {
+    console.log("Local network detected! Deploying mocks...")
+    const VRFCoordinatorV2Mock = await ethers.getContractFactory("VRFCoordinatorV2Mock");
+    vrfCoordinatorAddress = (await VRFCoordinatorV2Mock.deploy(BASE_FEE, GAS_PRICE_LINK)).address
+  } else {
+    const chainId = network.config.chainId
+    if (!chainId) throw new Error('No chain id on network')
+    vrfCoordinatorAddress = networkConfig[chainId].vrfCoordinatorV2
+  }
+
+  const Raffle = await ethers.getContractFactory("Raffle");
+  const raffle = await Raffle.deploy(vrfCoordinatorAddress);
+
+  await raffle.deployed();
+
+  console.log(`Raffle deployed to ${raffle.address} on network ${network.name}`);
+
+  const accounts = await ethers.getSigners()
+  raffle.connect(accounts[1]).join({ value: 1 })
+}
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
