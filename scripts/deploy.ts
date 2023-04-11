@@ -1,4 +1,7 @@
 import { ethers, network } from "hardhat";
+import fs from 'fs'
+import path from 'path'
+import { Raffle, VRFCoordinatorV2Mock } from "../typechain-types";
 
 const BASE_FEE = "250000000000000000" // 0.25 is this the premium in LINK?
 const GAS_PRICE_LINK = 1e9 // link per gas, is this the gas lane? // 0.000000001 LINK per gas
@@ -9,30 +12,73 @@ const networkConfig: Record<number, { vrfCoordinatorV2: string }> = {
   }
 }
 
+const gasLane = "0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc56c" // 30 gwei
+const callbackGasLimit = "500000" // 500,000 gas
+const keepersUpdateInterval = "30" // in seconds
+
+const ABI_FILE = "../../web3-playground-fe/src/constants/abi.json"
+
+async function updateABI(raffle: Raffle) {
+  // const chainId = (network.config.chainId ?? '').toString()
+  // const contractAddresses = JSON.parse(fs.readFileSync(frontEndContractsFile, "utf8"))
+  // contractAddresses[chainId] = [raffle.address]
+  // fs.writeFileSync(frontEndContractsFile, JSON.stringify(contractAddresses))
+  if (!fs.existsSync(ABI_FILE)) {
+    fs.createWriteStream
+  }
+  // @ts-ignore
+  fs.writeFileSync(path.resolve(__dirname, ABI_FILE), raffle.interface.format(ethers.utils.FormatTypes.json), 'utf-8')
+}
+
 async function main() {
   const networkName = network.name
 
-  let vrfCoordinatorAddress
+  let vrfCoordinatorV2Mock: VRFCoordinatorV2Mock | null =  null
+  let vrfCoordinatorAddress, subscriptionId
+
+  // TODO deployment is a duplicated in tests, do just once. DRY it up!
+
   // If we are on a local development network, we need to deploy mocks!
   if (['localhost', 'hardhat'].includes(networkName)) {
     console.log("Local network detected! Deploying mocks...")
     const VRFCoordinatorV2Mock = await ethers.getContractFactory("VRFCoordinatorV2Mock");
-    vrfCoordinatorAddress = (await VRFCoordinatorV2Mock.deploy(BASE_FEE, GAS_PRICE_LINK)).address
+    vrfCoordinatorV2Mock = await VRFCoordinatorV2Mock.deploy(BASE_FEE, GAS_PRICE_LINK)
+    vrfCoordinatorAddress = vrfCoordinatorV2Mock.address
+    console.log(`Deployed VRFCoordinatorV2Mock at ${vrfCoordinatorAddress}`)
+
+    const transactionResponse = await vrfCoordinatorV2Mock.createSubscription()
+    const transactionReceipt = await transactionResponse.wait(1)
+    subscriptionId = transactionReceipt.events![0].args!.subId
   } else {
+    // TODO!!
     const chainId = network.config.chainId
     if (!chainId) throw new Error('No chain id on network')
     vrfCoordinatorAddress = networkConfig[chainId].vrfCoordinatorV2
   }
 
   const Raffle = await ethers.getContractFactory("Raffle");
-  const raffle = await Raffle.deploy(vrfCoordinatorAddress);
+  const raffle = await Raffle.deploy(vrfCoordinatorAddress, subscriptionId, gasLane, callbackGasLimit, keepersUpdateInterval);
 
   await raffle.deployed();
 
+  if (vrfCoordinatorV2Mock) {
+    await vrfCoordinatorV2Mock.fundSubscription(
+      subscriptionId,
+      ethers.utils.parseEther("30")
+    );
+    await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address)
+  }
+
   console.log(`Raffle deployed to ${raffle.address} on network ${network.name}`);
+
+  await updateABI(raffle)
+
+  console.log('Updated Raffle ABI');
 
   const accounts = await ethers.getSigners()
   raffle.connect(accounts[1]).join({ value: 1 })
+
+  console.log(`Account ${accounts[1].address} joined the raffle`);
 }
 
 main().catch((error) => {

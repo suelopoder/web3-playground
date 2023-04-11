@@ -1,13 +1,16 @@
-# Sample Hardhat Project
+# web 3 playground
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This project acts a sandbox project to teach myself web3 stuff.
+Right now I am trying a decentralised lottery from heavily inspired from https://github.com/PatrickAlphaC/hardhat-smartcontract-lottery-fcc. Thank you @PatrickAlphaC!
 
-Try running some of the following tasks:
+## Running locally
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
-```
+`yarn local` To run a local node
+
+`yarn deploy` To deploy Raflle contract on local node
+
+When the raffle can be ended you can run `yarn endRound` to do so.
+
+## Run Tests
+
+`yarn test`

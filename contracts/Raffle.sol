@@ -10,19 +10,19 @@ error Raffle__CantJoinWhileCalculatingWinner();
 error Raffle__TransferFailed(address payable winner, uint256 amount);
 error Raffle__UpkeepNotNeeded(uint256 players, uint256 state);
 
-enum Raffle_State {
-    OPEN,
-    CALCULATING
-}
-
 contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
+    enum Raffle_State {
+        OPEN,
+        CALCULATING
+    }
+
     address private immutable i_owner;
     uint256 private immutable i_interval;
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     uint64 private immutable i_subscriptionId;
     bytes32 private immutable i_gasLane;
     uint32 private immutable i_callbackGasLimit;
-    
+
     address payable[] private s_players;
     address payable s_lastWinner;
     Raffle_State private s_state;
@@ -103,14 +103,11 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
         return (upkeepNeeded, "0x0");
     }
 
-    // chainlink letting us now it's time to check if we need to end raffle
+    // chainlink letting us know it's time to check if we need to end raffle
     function performUpkeep(bytes calldata) external override {
         bool close = canClose();
         if (!close) {
-            revert Raffle__UpkeepNotNeeded(
-                s_players.length,
-                uint256(s_state)
-            );
+            revert Raffle__UpkeepNotNeeded(s_players.length, uint256(s_state));
         }
 
         s_state = Raffle_State.CALCULATING;
@@ -130,5 +127,17 @@ contract Raffle is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     function getPlayerCount() public view returns (uint256) {
         return s_players.length;
+    }
+
+    function getLastTimestamp() public view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getLastWinner() public view returns (address) {
+        return s_lastWinner;
+    }
+
+    function getState() public view returns (Raffle_State) {
+        return s_state;
     }
 }

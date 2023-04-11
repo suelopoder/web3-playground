@@ -4,7 +4,8 @@
     "test": "hardhat test",
     "local": "hardhat node",
     "build": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.ts --network localhost"
+    "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "endRound": "hardhat run scripts/endRound.ts --network localhost"
   },
   "devDependencies": {
     "@chainlink/contracts": "^0.6.1",

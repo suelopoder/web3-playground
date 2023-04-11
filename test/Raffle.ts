@@ -110,6 +110,9 @@ describe("Raffle", function () {
           const tx = await raffle.performUpkeep("0x")
           await tx.wait(1)
 
+          expect(await raffle.getState()).to.equal(1)
+          expect(await raffle.canClose()).to.equal(false)
+
           await vrfCoordinatorV2Mock.fulfillRandomWords(
             subscriptionId,
             raffle.address,
@@ -118,6 +121,13 @@ describe("Raffle", function () {
           revert(e)
         }
       })
+    })
+  })
+
+  describe("getState", () => {
+    it('should return raffle state without errors', async () => {
+      const { raffle } = await loadFixture(deploy);
+      expect(await raffle.getState()).to.equal(0)
     })
   })
 });
