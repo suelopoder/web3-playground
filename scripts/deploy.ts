@@ -16,18 +16,19 @@ const gasLane = "0x474e34a077df58807dbe9c96d3c009b23b3c6d0cce433e59bbf5b34f823bc
 const callbackGasLimit = "500000" // 500,000 gas
 const keepersUpdateInterval = "30" // in seconds
 
-const ABI_FILE = "../../web3-playground-fe/src/constants/abi.json"
+const ABI_FILE = path.resolve(__dirname, "../frontend/src/constants/abi.json")
+const ADDRESSES_FILE = path.resolve(__dirname, "../frontend/src/constants/addresses.json")
 
 async function updateABI(raffle: Raffle) {
-  // const chainId = (network.config.chainId ?? '').toString()
-  // const contractAddresses = JSON.parse(fs.readFileSync(frontEndContractsFile, "utf8"))
-  // contractAddresses[chainId] = [raffle.address]
-  // fs.writeFileSync(frontEndContractsFile, JSON.stringify(contractAddresses))
-  if (!fs.existsSync(ABI_FILE)) {
-    fs.createWriteStream
-  }
-  // @ts-ignore
-  fs.writeFileSync(path.resolve(__dirname, ABI_FILE), raffle.interface.format(ethers.utils.FormatTypes.json), 'utf-8')
+  const data = raffle.interface.format(ethers.utils.FormatTypes.json) as string
+  fs.writeFileSync(ABI_FILE, data, 'utf-8')
+}
+
+async function updateAddresses(raffleAddress: string, vrfCoordinatorAddress: string) {
+  fs.writeFileSync(ADDRESSES_FILE, JSON.stringify({
+    raffleAddress,
+    vrfCoordinatorAddress,
+  }))
 }
 
 async function main() {
@@ -72,8 +73,9 @@ async function main() {
   console.log(`Raffle deployed to ${raffle.address} on network ${network.name}`);
 
   await updateABI(raffle)
+  await updateAddresses(raffle.address, vrfCoordinatorAddress)
 
-  console.log('Updated Raffle ABI');
+  console.log('Updated contracts metadata files');
 
   const accounts = await ethers.getSigners()
   raffle.connect(accounts[1]).join({ value: 1 })
