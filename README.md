@@ -5,11 +5,13 @@ Right now I am trying a decentralised lottery from heavily inspired from https:/
 
 ## Running locally
 
-`yarn local` To run a local node
+`yarn local` To run a local node.
 
-`yarn deploy` To deploy Raflle contract on local node
+On a new terminal tab do `yarn deploy` to deploy Raflle contract on local node.
 
-When the raffle can be ended you can run `yarn endRound` to do so.
+Now we can start the frontend by doing: `cd frontend; yarn start`. User can join the raffle contract.
+
+On a third terminal we can end raffle round by doing `yarn endRound`. Frontend should reflect the new status.
 
 ## Run Tests
 
