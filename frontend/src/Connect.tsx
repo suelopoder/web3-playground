@@ -9,7 +9,7 @@ const Injected = new InjectedConnector({
 });
 
 const Connect = () => {
-  const { activate, account, deactivate, active, library } = useWeb3React()
+  const { activate, account, deactivate, active } = useWeb3React()
   const [error, setError] = useState<Error | undefined>()
   
   const onError = (err: Error) => {

@@ -7,7 +7,7 @@ import { useWeb3React } from '@web3-react/core'
 const Main = () => {
   const contract = useContext(ContractContext)
   const { account } = useWeb3React()
-  const [playerCount, setPlayerCount] = useState(0)
+  const [players, setPlayers] = useState<string[]>([])
   const [lastWinner, setLastWinner] = useState('')
   const [canClose, setCanClose] = useState(false)
   useEffect(() => { updateUI() }, [contract])
@@ -19,8 +19,14 @@ const Main = () => {
     setCanClose(close)
     const winner = await contract.getLastWinner()
     setLastWinner(winner)
-    const playerCount = await contract.getPlayerCount()
-    setPlayerCount(playerCount.toNumber())
+
+    const playerCount = (await contract.getPlayerCount()).toNumber()
+    const players: string[] = []
+    for (let i = 0; i < playerCount; i++) {
+      const playerAddress = await contract.getPlayer(i)
+      players.push(playerAddress)
+    }
+    setPlayers(players)
   }
 
   async function joinRaffle() {
@@ -37,8 +43,18 @@ const Main = () => {
 
   return (
     <main style={{ margin: '1rem 0' }}>
-      Last winner was <b>{shortenAddress(lastWinner)}</b>
-      <p>{playerCount.toString()} players in round</p>
+      <h2>Last winner was <b>{shortenAddress(lastWinner)}</b></h2>
+      <section>
+        <h3>This round we have:</h3>
+        <ul>
+          {players.map(p => (
+          <li key={p}>
+            {shortenAddress(p)}
+            {p === account && <small>You</small>}
+          </li>
+          ))}
+        </ul>
+      </section>
       {canClose && <p>Raffle can end now</p>}
       <Button onClick={joinRaffle} text='Join' />
     </main>
