@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core';
 import { InjectedConnector } from "@web3-react/injected-connector";
 import { shortenAddress } from './utils';
-import { Button } from '@web3uikit/core'
 
 const Injected = new InjectedConnector({
   supportedChainIds: [31337]
@@ -28,17 +27,17 @@ const Connect = () => {
 
   if (!account || !active) {
     return (
-      <div>
-        {error ? <span>Something when wrong!</span> : ''}
-        <Button type='button' onClick={onConnect} text='Connect' />
-      </div>
+      <>
+        {error ? <span className='text-red-600'>Something went wrong!</span> : ''}
+        <button className='btn-primary' type='button' onClick={onConnect}>Connect</button>
+      </>
     )
   }
 
   return (
-    <div>
-      <span>{shortenAddress(account)}</span>
-      <Button type='button' onClick={deactivate} text='Disonnect' />
+    <div className='flex align-middle gap-2'>
+      <span className='m-auto'>{shortenAddress(account)}</span>
+      <button className='btn-primary' type='button' onClick={deactivate}>Disonnect</button>
     </div>
   )
 }

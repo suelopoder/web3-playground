@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ContractContext } from './RaffleProvider'
-import { Button } from '@web3uikit/core'
 import { shortenAddress } from './utils'
 import { useWeb3React } from '@web3-react/core'
 
@@ -42,13 +41,13 @@ const Main = () => {
   }
 
   return (
-    <main style={{ margin: '1rem 0' }}>
+    <main className='m-2'>
       <h2>Last winner was <b>{shortenAddress(lastWinner)}</b></h2>
-      <section>
-        <h3>This round we have:</h3>
+      <section className='my-2'>
+        <h3 className='font-semibold'>This round we have:</h3>
         <ul>
           {players.map(p => (
-          <li key={p}>
+          <li className='p-2' key={p}>
             {shortenAddress(p)}
             {p === account && <small>You</small>}
           </li>
@@ -56,7 +55,7 @@ const Main = () => {
         </ul>
       </section>
       {canClose && <p>Raffle can end now</p>}
-      <Button onClick={joinRaffle} text='Join' />
+      <button className='btn-primary' onClick={joinRaffle}>Join</button>
     </main>
   )
 }
